@@ -14,4 +14,9 @@ Data for the browser-only **OpenITI NgramReader** (`maximromanov/ngramreader`, h
 | `data_additional/ngrams_per_book/books_{n}gram/` | counts per ngram per book: `ID`, `bookID`, `count` int32; sorted by `ID`, `bookID`; 262,144 rows per row group; parts ≤ 88.3 MB |
 | `data_BC/` | book metadata (`metadata_books.parquet`: token counts, CLEAN flag), links (`metadata_books_urls.parquet`), book-type scores (`main_data.parquet`), type labels (`comps_labels.parquet`, `types_final.tsv`), author type scores (`rolling_authors.parquet`) |
 
+| `derived/vocab_{n}gram/` | **derived**: the vocabulary as plain text, one `ngramTR` per line, line number = `ID` (UTF-8, `\n`); `manifest.tsv` lists the parts. Served gzip-compressed by raw.githubusercontent.com (bigrams: 52.7 MB file, 26.5 MB transferred). The app loads this instead of the Parquet ID table (faster to decode, half the download). |
+| `derived/counts_{n}gram/` | **derived**: per-ID corpus totals, `<all texts>\t<clean texts>` per line, line number = `ID` (sum of `count` over all books / over books with `CLEAN == "CLEAN"`); used by the match preview |
+| `derived/book_links.tsv` | **derived**: for each `bookURI`, the primary version in the official release metadata (OpenITI/RELEASE tag `v2023.1.8`) and its path in that tag; empty for 120 books not listed there. The app links to `https://raw.githubusercontent.com/OpenITI/RELEASE/v2023.1.8/<path>`. |
+| `scripts/` | `derive_text.R` (vocabulary and totals, from this repository's Parquet files) and `derive_book_links.R` (from the release metadata); run from the repository root |
+
 Size: about 1.45 GB, above GitHub's recommended 1 GB per repository and well under the 5 GB limit; accepted for a single release repository. No file exceeds 100 MB; no Git LFS.
