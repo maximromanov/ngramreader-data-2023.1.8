@@ -1,0 +1,17 @@
+# ngramreader-data-2023.1.8
+
+Data for the browser-only **OpenITI NgramReader** (`maximromanov/ngramreader`, https://maximromanov.github.io/ngramreader/), built from **OpenITI release 2023.1.8**. One repository per OpenITI release: a later release goes into a new repository named the same way (e.g. `ngramreader-data-2025.1.9`), and the app switches to it by configuration.
+
+- **Source:** the Parquet data of the NgramReader R app, 2026 Parquet version (`adhfais_app1_local_2026_parquet`, commit `825b4bb`). Files are copied unchanged, in the same folder layout; `SHA256SUMS` lists their hashes.
+- **Format:** Apache Parquet, zstd-compressed, no R-specific metadata. Large tables are split at ID boundaries into `part-NNN.parquet` files; each table folder has a `manifest.parquet` (`file`, `id_min`, `id_max`, `rows`, `bytes`[, `row_groups`]).
+- **Access:** the app reads `https://raw.githubusercontent.com/maximromanov/ngramreader-data-2023.1.8/<commit>/<path>`, pinned to a commit. Vocabularies are fetched whole (browser-cached); per-book rows and Arabic strings by HTTP range requests (row groups only).
+
+| Path | Contents |
+|---|---|
+| `data/data_{n}grams2up_HI/` | ID tables (n = 1, 2, 3): `ID` int32, `ngramTR` string (simplified Buckwalter); 804,988 / 4,811,336 / 4,018,539 rows |
+| `data/data_{n}grams2up_HI_AR/` | Arabic script: `ID` int32, `ngram` string (UTF-8) |
+| `data/metadata_bookID_bookURI_frozen.parquet` | `bookID` int32, `bookURI` string (8,468 books) |
+| `data_additional/ngrams_per_book/books_{n}gram/` | counts per ngram per book: `ID`, `bookID`, `count` int32; sorted by `ID`, `bookID`; 262,144 rows per row group; parts ≤ 88.3 MB |
+| `data_BC/` | book metadata (`metadata_books.parquet`: token counts, CLEAN flag), links (`metadata_books_urls.parquet`), book-type scores (`main_data.parquet`), type labels (`comps_labels.parquet`, `types_final.tsv`), author type scores (`rolling_authors.parquet`) |
+
+Size: about 1.45 GB, above GitHub's recommended 1 GB per repository and well under the 5 GB limit; accepted for a single release repository. No file exceeds 100 MB; no Git LFS.
