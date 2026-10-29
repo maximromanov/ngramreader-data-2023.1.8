@@ -19,9 +19,25 @@ Data for the browser-only **OpenITI NgramReader** (`maximromanov/ngramreader`, h
 | `derived/book_links.tsv` | **derived**: for each `bookURI`, the primary version in the official release metadata (OpenITI/RELEASE tag `v2023.1.8`) and its path in that tag; empty for 120 books not listed there. The app links to `https://raw.githubusercontent.com/OpenITI/RELEASE/v2023.1.8/<path>`. |
 | `labels/book_labels.tsv` | **labels**: readable working labels per book: `bookURI`, `label` (transliterated, title in `*…*` italics markup), `titleAR`, `authorAR`, `ambiguous` (0/1), `ambiguousNote` (the source's reason when ambiguous); 8,387 of the 8,468 books (see *Labels* below) |
 | `labels/author_labels.tsv` | **labels**: per `authorURI` (book URI up to the first dot): `authorName` (transliterated, extracted from the book labels), `authorAR`, `deathCE` (when it parses), `nBooks` (labelled books), `variants` (distinct parsed names; 0 = no name, `authorName` is then the `authorURI`); 3,255 authors |
-| `scripts/` | `derive_text.R` (vocabulary and totals, from this repository's Parquet files), `derive_book_links.R` (from the release metadata) and `derive_labels.R` (labels, from the source file named below); run from the repository root |
+| `classifier/rolling/` | **Book Classifier** (`maximromanov/classifier`): rolling type scores per book: `bookID`, `start` (token offset of the window), 10 types as score × 10⁴ (`int16`; lossless) |
+| `classifier/rolling_entropy/` | **Book Classifier**: rolling entropy per book: `bookID`, `start`, `ENTRPOYUNI`, `ENTROPYBI` as value × 10⁶ (`int32`; lossless) |
+| `classifier/tfidf/` | **Book Classifier**: TF-IDF neighbours, top 250 per book: `bookID`, `rank`, `book2` (neighbour's bookID), `distance` (cosine similarity) |
+| `classifier/headers/` | **Book Classifier**: section headers per book: `bookID`, `pos` (token offset), `level` (1–3) |
+| `classifier/entropy_complete.parquet` | **Book Classifier**: whole-text entropy statistics and top type for 8,415 books (`bookID` + the app's table unchanged) |
+| `scripts/` | `derive_text.R` (vocabulary and totals, from this repository's Parquet files), `derive_book_links.R` (from the release metadata), `derive_labels.R` (labels, from the source file named below) and `derive_classifier.R` (classifier tables, from the R app's RDS files); run from the repository root |
 
-Size: about 1.45 GB, above GitHub's recommended 1 GB per repository and well under the 5 GB limit; accepted for a single release repository. No file exceeds 100 MB; no Git LFS.
+Size: about 1.57 GB (with `classifier/`, 111 MB), above GitHub's recommended 1 GB per repository and well under the 5 GB limit; accepted for a single release repository. No file exceeds 100 MB; no Git LFS.
+
+## Book Classifier data (`classifier/`)
+
+Data of the Book Classifier (ADHFAIS app 2, 10-type model M10, as deployed in 2025), for the browser-only classifier `maximromanov/classifier`. Shared tables are not duplicated: the classifier reads `data_BC/main_data.parquet`, `data_BC/rolling_authors.parquet`, `data_BC/comps_labels.parquet`, `data_BC/types_final.tsv`, `data_BC/metadata_books*.parquet`, `derived/book_links.tsv` and `labels/` from this repository.
+
+- **Source:** the R app's RDS files (`adhfais_app2_local_10types`: `data_additional/books_rolling_rds`, `books_rolling_entropy`, `books_tfidf_rds`, `data_temp/data_arrgegatedHeadersFiltered{H1,H2,H3}.rds`, `data/entropy_complete.rds`), converted by `scripts/derive_classifier.R`.
+- **Layout:** Parquet (zstd), sorted by `bookID`, 16,384 rows per row group with statistics on `bookID`; each table folder has `part-NNN.parquet` and a `manifest.parquet` (`file`, `id_min`, `id_max`, `rows`, `bytes`, `row_groups`), as for the ngram tables. The app reads one book's rows by HTTP range requests.
+- **Precision:** rolling scores are stored as integers × 10⁴ and rolling entropy as integers × 10⁶; the RDS values are exact multiples of these steps, and the decoded values equal the RDS values exactly (maximum deviation 0 over all 5,250,583 rows of each table).
+- **Headers:** `data_arrgegatedHeadersFilteredH3.rds` contains the H1 and H2 rows of the H1 and H2 files; one table with a `level` column holds all three levels. The data has positions only, no header text.
+- **Books without data:** 9 books have no rolling windows (empty in the R app too) and 53 are not in `entropy_complete`.
+- **Missing sources:** the TF-IDF input (`TFIDF_cosine_CompleteTexts_OpenITI_CLEAN.tsv`) and the script that assembled `entropy_complete.rds` were not found; the R app's RDS files are the record for these tables.
 
 ## Labels
 
