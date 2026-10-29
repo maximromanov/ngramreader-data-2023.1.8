@@ -1,7 +1,8 @@
 # Readable book titles and author names for the release's books (ngramreader-data-2023.1.8), shared by the
 # NgramReader and the Book Classifier.
 # Source: OpenITI_WorkingLabels.tsv (columns URI, generated_label_Opus47, AuthorAR, TitleAR, Ambiguous), working
-# labels generated with a language model; Ambiguous is "0" or a short prose reason. Labels are copied unchanged.
+# labels generated with a language model; Ambiguous is "0" or a short prose reason. Labels are copied unchanged, except
+# that quoted fields are decoded (see below).
 # Outputs (UTF-8 TSV; header and character fields in double quotes, embedded quotes doubled, missing values NA):
 #   labels/book_labels.tsv    bookURI, label (with *italic* markup), titleAR, authorAR, ambiguous (0/1), ambiguousNote
 #                             -- one row per book of data_BC/metadata_books.parquet that has a label
@@ -22,6 +23,14 @@ lab <- read.delim(src, sep = "\t", quote = "", stringsAsFactors = FALSE, encodin
                   na.strings = character(0), check.names = FALSE)
 stopifnot(identical(names(lab), c("URI", "generated_label_Opus47", "AuthorAR", "TitleAR", "Ambiguous")), !anyDuplicated(lab$URI))
 lab[] <- lapply(lab, function(x) sub("\r$", "", x))
+# Fields quoted in the source are decoded (no change of wording): a field wholly wrapped in double quotes with every
+# inner double quote doubled (TSV quoting), or wholly wrapped in single quotes with every inner single quote doubled.
+unq <- function(x, q) { qq <- paste0(q, q); inner <- substr(x, 2, nchar(x) - 1)
+  hit <- nchar(x) >= 2 & startsWith(x, q) & endsWith(x, q) & !grepl(paste0("(^|[^", q, "])", q, "([^", q, "]|$)"), gsub(qq, "", inner, fixed = TRUE))
+  hit <- hit & !grepl(q, gsub(qq, "", inner, fixed = TRUE), fixed = TRUE)
+  x[hit] <- gsub(qq, q, inner[hit], fixed = TRUE); attr(x, "n") <- sum(hit); x }
+nq <- 0
+for (k in names(lab)[-1]) for (q in c('"', "'")) { y <- unq(lab[[k]], q); nq <- nq + attr(y, "n"); message(sprintf("decoded %s-quoted %s: %d", if (q == '"') "double" else "single", k, attr(y, "n"))); lab[[k]] <- as.vector(y) }
 books <- read_parquet("data_BC/metadata_books.parquet")$bookURI
 b <- lab[lab$URI %in% books, ]
 b <- b[order(b$URI), ]
