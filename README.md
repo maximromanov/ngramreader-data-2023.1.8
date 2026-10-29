@@ -20,3 +20,7 @@ Data for the browser-only **OpenITI NgramReader** (`maximromanov/ngramreader`, h
 | `scripts/` | `derive_text.R` (vocabulary and totals, from this repository's Parquet files) and `derive_book_links.R` (from the release metadata); run from the repository root |
 
 Size: about 1.45 GB, above GitHub's recommended 1 GB per repository and well under the 5 GB limit; accepted for a single release repository. No file exceeds 100 MB; no Git LFS.
+
+## License
+
+Derived from OpenITI release 2023.1.8, https://doi.org/10.5281/zenodo.10007820, under CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International, https://creativecommons.org/licenses/by-nc-sa/4.0/). The full license text is in [`LICENSE`](LICENSE). Corpus: Lorenz Nigst, Maxim Romanov, Sarah Bowen Savant, Masoumeh Seydi, Peter Verkinderen, Hamidreza Hakimi, *OpenITI: a Machine-Readable Corpus of Islamicate Texts*, release 2023.1.8 (Zenodo, 2023), https://doi.org/10.5281/zenodo.10007820.
